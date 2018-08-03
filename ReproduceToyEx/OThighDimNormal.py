@@ -4,27 +4,28 @@ import time
 
 
 # This is a general implementation for two period, d-asset MMOT
-d = 5
-BATCH_SIZE = 2 ** 10
-GAMMA = 1000
-N_TRAIN = 40000
-morp = -1
-K = 0
+d = 30
+BATCH_SIZE = 2 ** 12
+GAMMA = 20000
+N_TRAIN = 30000
+morp = 1
 
-
-def cost_f(y):
-    out = tf.nn.relu(tf.reduce_sum(y, axis=1)/d - K)
-    return morp * out
 
 np.random.seed(0)
 cov_maty = np.diag(np.random.random_sample(d)) * 2
-downscale = 0.5 # how much the variance is scaled down from t=1 to t=0
+downscale = 0.5 # affects how much the variance is scaled down from t=1 to t=0
 scalemat = np.random.random_sample([d, d])*(1-downscale) + downscale
 cov_matx = cov_maty * scalemat
 mean = np.random.random_sample(d) * 2 - 1
 
 print(mean)
 np.random.seed(int(round(time.time())))
+
+K = sum(mean)
+def cost_f(y):
+    out = tf.nn.relu(tf.reduce_sum(y, axis=1) - K)
+
+    return morp * out
 
 def gen_marginal(batch_size):
     # returns sampled marginals of S0, S1 as batch_size x d numpy arrays.
@@ -97,8 +98,8 @@ with tf.Session() as sess:
         sam_mu1 = next(gen_pen)
         (_, c) = sess.run([train_op, obj_fun], feed_dict={S1: sam_s1, mu1: sam_mu1})
         value_list[t] = c
-        if t % 2000 == 0 and t > 0:
+        if t % 100 == 0 and t > 0:
             print(t)
-            print(np.mean(value_list[t-2000:t]))
+            print(np.mean(value_list[t-100:t]))
 
-    print('Final_value: ' + str(np.mean(value_list[N_TRAIN-5000:])))
+    print('Final_value: ' + str(np.mean(value_list[N_TRAIN-2000:])))
