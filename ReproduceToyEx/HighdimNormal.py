@@ -5,31 +5,31 @@ from mpl_toolkits.mplot3d import Axes3D
 import time
 
 # This is a general implementation for two period, d-asset MMOT
-d = 5
-BATCH_SIZE = 2 ** 10
+d = 30
+BATCH_SIZE = 2 ** 12
 GAMMA = 1000
 N_TRAIN = 20000
 P_COST = 2
-morp = -1
-K = 0
+morp = 1
 
 starttime = time.time()
 
 
-def cost_f(y):
-    out = tf.nn.relu(tf.reduce_sum(y, axis=1)/d - K)
-
-    return morp * out
-
 np.random.seed(0)
 cov_maty = np.diag(np.random.random_sample(d)) * 2
-downscale = 0.5 # how much the variance is scaled down from t=1 to t=0
+downscale = 0.5 # affects how much the variance is scaled down from t=1 to t=0
 scalemat = np.random.random_sample([d, d])*(1-downscale) + downscale
 cov_matx = cov_maty * scalemat
 mean = np.random.random_sample(d) * 2 - 1
 
 print(mean)
 np.random.seed(int(round(time.time())))
+
+K = sum(mean)
+def cost_f(y):
+    out = tf.nn.relu(tf.reduce_sum(y, axis=1) - K)
+
+    return morp * out
 
 
 def gen_marginal(batch_size):
@@ -49,7 +49,7 @@ def gen_mu(batch_size):
         yield x, y
 
 
-def univ_approx(x, name, hidden_dim=64):
+def univ_approx(x, name, hidden_dim=256):
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         ua_w = tf.get_variable('ua_w', shape=[1, hidden_dim],
                                initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
@@ -75,7 +75,7 @@ def univ_approx(x, name, hidden_dim=64):
     return tf.reduce_sum(z, 1)
 
 
-def multi_to_one_approx(x, name, hidden_dim=128):
+def multi_to_one_approx(x, name, hidden_dim=512):
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         ua_w = tf.get_variable('ua_w', shape=[d, hidden_dim],
                                initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
