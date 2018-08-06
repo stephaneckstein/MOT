@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="78618303-8b94-490b-b738-9bbc634035ee" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/MartingaleOptimalTransport.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MartingaleOptimalTransport.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReproduceToyEx/GeneralMMOT.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReproduceToyEx/GeneralMMOT.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReproduceToyEx/JustOT.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReproduceToyEx/JustOT.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReproduceToyEx/RefHighDimVal.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReproduceToyEx/RefHighDimVal.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -19,8 +19,32 @@
       <file leaf-file-name="HighdimNormal.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ReproduceToyEx/HighdimNormal.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2190">
-              <caret line="150" selection-end-line="150" />
+            <state relative-caret-position="270">
+              <caret line="135" lean-forward="true" selection-start-line="135" selection-end-line="135" />
+              <folding>
+                <element signature="e#0#23#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="GeneralMMOT.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ReproduceToyEx/GeneralMMOT.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="75">
+              <caret line="8" column="20" selection-start-line="8" selection-start-column="20" selection-end-line="8" selection-end-column="20" />
+              <folding>
+                <element signature="e#0#23#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="JustOT.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ReproduceToyEx/JustOT.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-885">
+              <caret line="10" column="8" selection-start-line="10" selection-start-column="8" selection-end-line="10" selection-end-column="8" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -52,11 +76,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="HighdimNormalCondRef.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="HighdimNormalCondRef.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-435">
-              <caret line="7" column="6" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="6" />
+            <state relative-caret-position="270">
+              <caret line="21" column="30" lean-forward="true" selection-start-line="21" selection-start-column="30" selection-end-line="21" selection-end-column="30" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -82,6 +106,8 @@
         <option value="$PROJECT_DIR$/ReproduceToyEx/OThighDimNormal.py" />
         <option value="$PROJECT_DIR$/ReproduceToyEx/RefHighDimVal.py" />
         <option value="$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py" />
+        <option value="$PROJECT_DIR$/ReproduceToyEx/JustOT.py" />
+        <option value="$PROJECT_DIR$/ReproduceToyEx/GeneralMMOT.py" />
       </list>
     </option>
   </component>
@@ -93,7 +119,25 @@
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
-    <panes />
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="MartingaleOptimalTransport" type="b2602c69:ProjectViewProjectNode" />
+              <item name="MartingaleOptimalTransport" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="MartingaleOptimalTransport" type="b2602c69:ProjectViewProjectNode" />
+              <item name="MartingaleOptimalTransport" type="462c0819:PsiDirectoryNode" />
+              <item name="ReproduceToyEx" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
@@ -111,8 +155,8 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.HighdimNormalCondRef">
-    <configuration name="HighdimNormal" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager" selected="Python.GeneralMMOT">
+    <configuration name="GeneralMMOT" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="MartingaleOptimalTransport" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -124,7 +168,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ReproduceToyEx/HighdimNormal.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ReproduceToyEx/GeneralMMOT.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -143,6 +187,24 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <configuration name="JustOT" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="MartingaleOptimalTransport" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ReproduceToyEx" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ReproduceToyEx/JustOT.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -185,17 +247,19 @@
       <option name="MODULE_MODE" value="false" />
     </configuration>
     <list>
-      <item itemvalue="Python.HighdimNormal" />
       <item itemvalue="Python.OThighDimNormal" />
       <item itemvalue="Python.RefHighDimVal" />
       <item itemvalue="Python.HighdimNormalCondRef" />
+      <item itemvalue="Python.GeneralMMOT" />
+      <item itemvalue="Python.JustOT" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.GeneralMMOT" />
+        <item itemvalue="Python.JustOT" />
         <item itemvalue="Python.HighdimNormalCondRef" />
         <item itemvalue="Python.RefHighDimVal" />
         <item itemvalue="Python.OThighDimNormal" />
-        <item itemvalue="Python.HighdimNormal" />
       </list>
     </recent_temporary>
   </component>
@@ -214,14 +278,13 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-3" y="0" width="2054" height="1110" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.5095863" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.30232558" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32988626" />
       <window_info anchor="bottom" id="Version Control" order="7" />
-      <window_info anchor="bottom" id="Python Console" order="7" weight="0.32987553" />
+      <window_info anchor="bottom" id="Python Console" order="7" weight="0.32885212" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3991727" />
@@ -291,16 +354,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ReproduceToyEx/HighdimNormal.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2190">
-          <caret line="150" selection-end-line="150" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/lib/python3.5/codecs.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4650">
@@ -330,8 +383,45 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ReproduceToyEx/HighdimNormalCondRef.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-435">
-          <caret line="7" column="6" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="6" />
+        <state relative-caret-position="270">
+          <caret line="21" column="30" lean-forward="true" selection-start-line="21" selection-start-column="30" selection-end-line="21" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ReproduceToyEx/HighdimNormal.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="135" lean-forward="true" selection-start-line="135" selection-end-line="135" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.5/importlib/_bootstrap.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3504">
+          <caret line="234" column="24" lean-forward="true" selection-start-line="234" selection-start-column="24" selection-end-line="234" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ReproduceToyEx/JustOT.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-885">
+          <caret line="10" column="8" selection-start-line="10" selection-start-column="8" selection-end-line="10" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ReproduceToyEx/GeneralMMOT.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="8" column="20" selection-start-line="8" selection-start-column="20" selection-end-line="8" selection-end-column="20" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>

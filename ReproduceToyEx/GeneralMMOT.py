@@ -6,11 +6,15 @@ import time
 
 # This is a general implementation for two period, d-asset MMOT
 d = 2
-BATCH_SIZE = 2 ** 10
-GAMMA = 100
-N_TRAIN = 20000
-P_COST = 2
-morp = -1
+BATCH_SIZE = 2 ** 12
+GAMMA = 200
+N_TRAIN = 50000
+P_COST = 3
+morp = 1
+
+print(P_COST)
+print(morp)
+print(GAMMA)
 
 starttime = time.time()
 
@@ -34,14 +38,18 @@ def gen_marginal(batch_size):
         # y = y * [6, 4] - [3, 2]
 
         x = np.zeros([batch_size, 2])
-        #x[:, 0] = np.random.randn(batch_size)
-        x[:, 0] = np.random.random_sample(batch_size) * 0.02 - 0.01
-        x[:, 1] = np.random.random_sample(batch_size) * 2 - 1
+        x[:, 0] = np.random.randn(batch_size)
+        x[:, 1] = np.random.randn(batch_size)
+        # x[:, 0] = np.random.random_sample(batch_size) * 0.02 - 0.01
+        # x[:, 1] = np.random.random_sample(batch_size) * 2 - 1
+
 
         y = np.zeros([batch_size, 2])
         y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
+        y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
+        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
         # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
-        y[:, 1] = x[:, 1]
+        # y[:, 1] = x[:, 1]
         yield x, y
 
 
@@ -56,14 +64,18 @@ def gen_mu(batch_size):
         # y = y * [6, 4] - [3, 2]
 
         x = np.zeros([batch_size, 2])
-        #x[:, 0] = np.random.randn(batch_size)
-        x[:, 0] = np.random.random_sample(batch_size) * 0.02 - 0.01
-        x[:, 1] = np.random.random_sample(batch_size) * 2 - 1
+        x[:, 0] = np.random.randn(batch_size)
+        x[:, 1] = np.random.randn(batch_size)
+        # x[:, 0] = np.random.random_sample(batch_size) * 0.02 - 0.01
+        # x[:, 1] = np.random.random_sample(batch_size) * 2 - 1
+
 
         y = np.zeros([batch_size, 2])
         y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
+        y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
+        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
         # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
-        y[:, 1] = x[:, 1]
+        # y[:, 1] = x[:, 1]
         yield x, y
 
 
@@ -153,6 +165,7 @@ psi_0 = univ_approx(mu0[:, 0:1], 'z'+str(0))
 psi_1 = univ_approx(mu0[:, 1:2], 'z'+str(1))
 h0 = multi_to_one_approx(mu0, 'm'+str(0))
 h1 = multi_to_one_approx(mu0, 'm'+str(1))
+den = 2 * GAMMA * tf.nn.relu(cost_f(mu0, mu1) - sum_mu0 - sum_mu1 - sum_mart_mu)
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -173,7 +186,28 @@ with tf.Session() as sess:
 
     print('Final_value: ' + str(np.mean(value_list[N_TRAIN-5000:])))
     print(time.time() - starttime)
-    exit()
+
+    # sampling from optimal measure
+    sample_opt = 1000
+    batch_up = 2 ** 14
+    sample_up = np.zeros([sample_opt, d])
+    gen_pen = gen_mu(batch_up)
+    s_ind = 0
+    while s_ind < sample_opt:
+        sam_mu0, sam_mu1 = next(gen_pen)
+        denv = sess.run(den, feed_dict={mu0: sam_mu0, mu1: sam_mu1})
+        d_max = np.max(denv)
+        # d_max = np.quantile(denv, 0.99)  # make it quicker
+        u_den = np.random.random_sample(batch_up)
+        for i_den in range(batch_up):
+            if denv[i_den] >= d_max * u_den[i_den]:
+                sample_up[s_ind] = sam_mu1[i_den, :]
+                s_ind +=1
+                if s_ind == sample_opt:
+                    break
+    plt.scatter(sample_up[:, 0], sample_up[:, 1], s=0.5)
+    plt.show()
+
     # Plot optimal functions (dual optimizers)
     g_size = 500
     sam_mu1 = np.zeros(shape=[g_size, 2])

@@ -145,6 +145,21 @@ def gen_mu_cond(batch_size, mult, const):
         # out = ytotal[ind2]
         # yield out
 
+
+n_steps = 2 ** 6
+min_batch = 2 ** 4  # BATCH_SIZE = n_steps * min_batch
+big_batch = 2 ** 10
+def gen_mu_cond2(batch_size, mult, const):
+    while True:
+        ytotal = np.zeros([n_steps * min_batch, d])
+        for j in range(n_steps):
+            y = np.random.multivariate_normal(size=big_batch, cov=cov_maty, mean=mean)
+            _, landscape = eval_density(y, mult, const)
+            ind = np.argpartition(landscape, -min_batch)[-min_batch:]
+            ytotal[j*min_batch:(j+1)*min_batch, :] = y[ind, :]
+        yield ytotal
+
+
 S1 = tf.placeholder(dtype=tf.float32, shape=[None, d])
 mu1 = tf.placeholder(dtype=tf.float32, shape=[None, d])
 
@@ -172,7 +187,7 @@ with tf.Session() as sess:
 
     for mt in range(n_updates):
         if mt > 0:
-            gen_pen = gen_mu_cond(BATCH_SIZE, mult, const)
+            gen_pen = gen_mu_cond2(BATCH_SIZE, mult, const)
         for t in range(STEPS_UPDATE):
             sam_s1 = next(gen_marg)
             sam_mu1 = next(gen_pen)

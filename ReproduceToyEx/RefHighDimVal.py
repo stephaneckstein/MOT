@@ -3,7 +3,7 @@ import time
 
 
 # This is a general implementation for two period, d-asset MMOT
-d = 30
+d = 3
 morp = 1
 
 

@@ -6,29 +6,37 @@ import numpy as np
 d = 2
 BATCH_SIZE = 2 ** 10
 GAMMA = 100
-N_TRAIN = 40000
+N_TRAIN = 60000
+p = 3
+morp = -1
+print(p)
+print(morp)
+print(GAMMA)
 
 
 def cost_f(y):
     # spread option for d = 2:
-    p = 2
     out = tf.pow(tf.abs(y[:, 0] - y[:, 1]), p)
-
     # K = 1
     # out = tf.nn.relu(y[:, 0] + y[:, 1] - K)
-    return out
+    return morp * out
 
 
 def gen_marginal(batch_size):
     # returns sampled marginals of S0, S1 as batch_size x d numpy arrays.
     while True:
+        # x = np.random.random_sample([batch_size, 2])
+        # x = x * [2, 2] - [1, 1]
+        #
         # y = np.random.random_sample([batch_size, 2])
         # y = y * [6, 4] - [3, 2]
 
         y = np.zeros([batch_size, 2])
         y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
-
+        y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
+        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
+        # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
+        # y[:, 1] = x[:, 1]
         yield y
 
 
@@ -36,17 +44,25 @@ def gen_mu(batch_size):
     # returns two samples x, y as batch_size x d numpy arrays
     # can be same as gen_marginal
     while True:
+        # x = np.random.random_sample([batch_size, 2])
+        # x = x * [2, 2] - [1, 1]
+        #
         # y = np.random.random_sample([batch_size, 2])
         # y = y * [6, 4] - [3, 2]
 
+
         y = np.zeros([batch_size, 2])
         y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
-
+        y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
+        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
+        # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
+        # y[:, 1] = x[:, 1]
         yield y
 
 
-def univ_approx(x, name, hidden_dim=32):
+
+
+def univ_approx(x, name, hidden_dim=64):
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         ua_w = tf.get_variable('ua_w', shape=[1, hidden_dim],
                                initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
