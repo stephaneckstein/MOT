@@ -206,6 +206,9 @@ with tf.Session() as sess:
                 if s_ind == sample_opt:
                     break
     plt.scatter(sample_up[:, 0], sample_up[:, 1], s=0.5)
+    name = input('Name for plot?')
+    savename = str(d)+'_'+str(BATCH_SIZE)+'_'+str(GAMMA)+'_'+str(N_TRAIN)+'_'+str(P_COST)+'_'+str(morp)+name+'.pdf'
+    plt.savefig(savename, format='pdf', dpi=400)
     plt.show()
 
     # Plot optimal functions (dual optimizers)
