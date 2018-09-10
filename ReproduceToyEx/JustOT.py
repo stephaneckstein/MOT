@@ -5,10 +5,10 @@ import numpy as np
 # This is a general implementation for two period, d-asset MMOT
 d = 2
 BATCH_SIZE = 2 ** 10
-GAMMA = 100
-N_TRAIN = 60000
-p = 3
-morp = -1
+GAMMA = 400
+N_TRAIN = 40000
+p = 2
+morp = 1
 print(p)
 print(morp)
 print(GAMMA)
@@ -28,12 +28,12 @@ def gen_marginal(batch_size):
         # x = np.random.random_sample([batch_size, 2])
         # x = x * [2, 2] - [1, 1]
         #
-        # y = np.random.random_sample([batch_size, 2])
-        # y = y * [6, 4] - [3, 2]
+        y = np.random.random_sample([batch_size, 2])
+        y = y * [8, 8] - [4, 4]
 
-        y = np.zeros([batch_size, 2])
-        y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
+        # y = np.zeros([batch_size, 2])
+        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
+        # y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
         # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
         # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
         # y[:, 1] = x[:, 1]
@@ -47,22 +47,19 @@ def gen_mu(batch_size):
         # x = np.random.random_sample([batch_size, 2])
         # x = x * [2, 2] - [1, 1]
         #
-        # y = np.random.random_sample([batch_size, 2])
-        # y = y * [6, 4] - [3, 2]
+        y = np.random.random_sample([batch_size, 2])
+        y = y * [8, 8] - [4, 4]
 
-
-        y = np.zeros([batch_size, 2])
-        y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
+        # y = np.zeros([batch_size, 2])
+        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
+        # y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
         # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
         # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
         # y[:, 1] = x[:, 1]
         yield y
 
 
-
-
-def univ_approx(x, name, hidden_dim=64):
+def univ_approx(x, name, hidden_dim=32):
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         ua_w = tf.get_variable('ua_w', shape=[1, hidden_dim],
                                initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)

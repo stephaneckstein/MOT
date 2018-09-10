@@ -6,9 +6,9 @@ import time
 
 # This is a general implementation for two period, d-asset MMOT
 d = 2
-BATCH_SIZE = 2 ** 10
-GAMMA = 1000
-N_TRAIN = 25000
+BATCH_SIZE = 2 ** 11
+GAMMA = 3000
+N_TRAIN = 50000
 P_COST = 2
 morp = -1
 
@@ -18,7 +18,7 @@ print(GAMMA)
 
 starttime = time.time()
 
-def cost_f(x,y):
+def cost_f(y):
     # spread option for d = 2:
     out = tf.pow(tf.abs(y[:, 0] - y[:, 1]), P_COST)
 
@@ -35,22 +35,12 @@ def gen_marginal(batch_size):
         x = x * [2, 2] - [1, 1]
 
         y = np.random.random_sample([batch_size, 2])
-        y = y * [4, 6] - [2, 3]
+        y = y * [6, 2] - [3, 1]
 
-        # x = np.zeros([batch_size, 2])
-        # x[:, 0] = np.random.randn(batch_size)
-        # x[:, 1] = np.random.randn(batch_size)
-        # x[:, 0] = np.random.random_sample(batch_size) * 0.02 - 0.01
-        # x[:, 1] = np.random.random_sample(batch_size) * 2 - 1
+        z = np.random.random_sample([batch_size, 2])
+        z = z * [8, 8] - [4, 4]
 
-
-        # y = np.zeros([batch_size, 2])
-        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        # y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
-        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
-        # y[:, 1] = x[:, 1]
-        yield x, y
+        yield x, y, z
 
 
 def gen_mu(batch_size):
@@ -59,24 +49,14 @@ def gen_mu(batch_size):
     while True:
         x = np.random.random_sample([batch_size, 2])
         x = x * [2, 2] - [1, 1]
-        x[:, 1] = x[:, 0]
 
         y = np.random.random_sample([batch_size, 2])
-        y = y * [4, 6] - [2, 3]
+        y = y * [6, 2] - [3, 1]
 
-        # x = np.zeros([batch_size, 2])
-        # x[:, 0] = np.random.randn(batch_size)
-        # x[:, 1] = np.random.randn(batch_size)
-        # x[:, 0] = np.random.random_sample(batch_size) * 0.02 - 0.01
-        # x[:, 1] = np.random.random_sample(batch_size) * 2 - 1
+        z = np.random.random_sample([batch_size, 2])
+        z = z * [8, 8] - [4, 4]
 
-        # y = np.zeros([batch_size, 2])
-        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        # y[:, 1] = np.random.randn(batch_size) * np.sqrt(4)
-        # y[:, 0] = np.random.randn(batch_size) * np.sqrt(2)
-        # y[:, 1] = np.random.random_sample(batch_size) * 4 - 2
-        # y[:, 1] = x[:, 1]
-        yield x, y
+        yield x, y, z
 
 
 def univ_approx(x, name, hidden_dim=32):
@@ -131,10 +111,39 @@ def multi_to_one_approx(x, name, hidden_dim=64):
     return tf.reduce_sum(z, 1)
 
 
+def multi2_to_one_approx(x1, x2, name, hidden_dim=64):
+    x = tf.concat([x1, x2], axis=1)
+    with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
+        ua_w = tf.get_variable('ua_w', shape=[2 * d, hidden_dim],
+                               initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
+        ua_b = tf.get_variable('ua_b', shape=[hidden_dim], initializer=tf.contrib.layers.xavier_initializer(),
+                               dtype=tf.float32)
+        z = tf.matmul(x, ua_w) + ua_b
+        a = tf.nn.relu(z)
+        ua_w2 = tf.get_variable('ua_w2', shape=[hidden_dim, hidden_dim],
+                                initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
+        ua_b2 = tf.get_variable('ua_b2', shape=[hidden_dim], initializer=tf.contrib.layers.xavier_initializer(),
+                                dtype=tf.float32)
+        z2 = tf.matmul(a, ua_w2) + ua_b2
+        a2 = tf.nn.relu(z2)
+        ua_w3 = tf.get_variable('ua_w3', shape=[hidden_dim, hidden_dim],
+                                initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
+        ua_b3 = tf.get_variable('ua_b3', shape=[hidden_dim], initializer=tf.contrib.layers.xavier_initializer(),
+                                dtype=tf.float32)
+        z3 = tf.matmul(a2, ua_w3) + ua_b3
+        a3 = tf.nn.relu(z3)
+        ua_v = tf.get_variable('ua_v', shape=[hidden_dim, 1],
+                               initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
+        z = tf.matmul(a3, ua_v)
+    return tf.reduce_sum(z, 1)
+
+
 S0 = tf.placeholder(dtype=tf.float32, shape=[None, d])
 S1 = tf.placeholder(dtype=tf.float32, shape=[None, d])
+S2 = tf.placeholder(dtype=tf.float32, shape=[None, d])
 mu0 = tf.placeholder(dtype=tf.float32, shape=[None, d])
 mu1 = tf.placeholder(dtype=tf.float32, shape=[None, d])
+mu2 = tf.placeholder(dtype=tf.float32, shape=[None, d])
 
 sum_0 = 0
 sum_mu0 = 0
@@ -150,12 +159,24 @@ for i in range(d):
     sum_mu1 += univ_approx(mu1[:, i:i + 1], 'o'+str(i))
 ints_1 = tf.reduce_mean(sum_1)
 
-sum_mart_mu = 0
+sum_2 = 0
+sum_mu2 = 0
 for i in range(d):
-    sum_mart_mu += multi_to_one_approx(mu0, 'm'+str(i)) * tf.reduce_sum((mu1[:, i:i+1] - mu0[:, i:i+1]), 1)
+    sum_2 += univ_approx(S2[:, i:i + 1], 't'+str(i))
+    sum_mu2 += univ_approx(mu2[:, i:i + 1], 't'+str(i))
+ints_2 = tf.reduce_mean(sum_2)
 
-pen = GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(cost_f(mu0, mu1) - sum_mu0 - sum_mu1 - sum_mart_mu)))
-obj_fun = ints_0 + ints_1 + pen
+sum_mart_mu_01 = 0
+for i in range(d):
+    sum_mart_mu_01 += multi_to_one_approx(mu0, 'm'+str(i)) * tf.reduce_sum((mu1[:, i:i+1] - mu0[:, i:i+1]), 1)
+
+sum_mart_mu_02 = 0
+for i in range(d):
+    sum_mart_mu_02 += multi2_to_one_approx(mu0, mu1, 'm2'+str(i)) * tf.reduce_sum((mu2[:, i:i+1] - mu1[:, i:i+1]), 1)
+
+
+pen = GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(cost_f(mu2) - sum_mu0 - sum_mu1 - sum_mu2 - sum_mart_mu_01 - sum_mart_mu_02)))
+obj_fun = ints_0 + ints_1 + ints_2 + pen
 train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.99, beta2=0.995).minimize(obj_fun)
 
 ### Objects to plot
@@ -165,7 +186,7 @@ psi_0 = univ_approx(mu0[:, 0:1], 'z'+str(0))
 psi_1 = univ_approx(mu0[:, 1:2], 'z'+str(1))
 h0 = multi_to_one_approx(mu0, 'm'+str(0))
 h1 = multi_to_one_approx(mu0, 'm'+str(1))
-den = 2 * GAMMA * tf.nn.relu(cost_f(mu0, mu1) - sum_mu0 - sum_mu1 - sum_mart_mu)
+den = 2 * GAMMA * tf.nn.relu(tf.nn.relu(cost_f(mu2) - sum_mu0 - sum_mu1 - sum_mu2 - sum_mart_mu_01 - sum_mart_mu_02))
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -174,9 +195,9 @@ with tf.Session() as sess:
 
     value_list = np.zeros(N_TRAIN)
     for t in range(N_TRAIN):
-        sam_s0, sam_s1 = next(gen_marg)
-        sam_mu0, sam_mu1 = next(gen_pen)
-        (_, c) = sess.run([train_op, obj_fun], feed_dict={S0: sam_s0, S1: sam_s1, mu0: sam_mu0, mu1: sam_mu1})
+        sam_s0, sam_s1, sam_s2 = next(gen_marg)
+        sam_mu0, sam_mu1, sam_mu2 = next(gen_pen)
+        (_, c) = sess.run([train_op, obj_fun], feed_dict={S0: sam_s0, S1: sam_s1, S2: sam_s2, mu0: sam_mu0, mu1: sam_mu1, mu2: sam_mu2})
         # thv = sess.run(th, feed_dict={S0: sam_s0, S1: sam_s1, mu0: sam_mu0, mu1: sam_mu1})
         # print(thv)
         value_list[t] = c
@@ -186,6 +207,7 @@ with tf.Session() as sess:
 
     print('Final_value: ' + str(np.mean(value_list[N_TRAIN-5000:])))
     print(time.time() - starttime)
+    exit()
 
     # sampling from optimal measure
     sample_opt = 1000
@@ -199,7 +221,7 @@ with tf.Session() as sess:
     gen_pen = gen_mu(batch_up)
     s_ind = 0
     while s_ind < sample_opt:
-        sam_mu0, sam_mu1 = next(gen_pen)
+        sam_mu0, sam_mu1, sam_mu2 = next(gen_pen)
         denv = sess.run(den, feed_dict={mu0: sam_mu0, mu1: sam_mu1})
         d_max = np.max(denv)
         # d_max = np.quantile(denv, 0.99)  # make it quicker
@@ -262,11 +284,6 @@ with tf.Session() as sess:
     savename = str(d)+'_'+str(BATCH_SIZE)+'_'+str(GAMMA)+'_'+str(N_TRAIN)+'_'+str(P_COST)+'_'+str(morp)+'Xvar'+name+'.pdf'
     plt.savefig(savename, format='pdf', dpi=400)
     plt.title('x1x2')
-    plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(xs=x1x2[:, 0], ys=y1y2[:, 0], zs=y1y2[:, 1])
     plt.show()
 
     while 1:

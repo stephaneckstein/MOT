@@ -41,7 +41,7 @@ def gen_mu(batch_size):
         y = np.random.multivariate_normal(size=batch_size, cov=cov_maty, mean=mean)
         yield x, y
 
-with tf.device('/gpu:0')
+with tf.device('/gpu:0'):
     K = sum(mean)
     def cost_f(y):
         out = tf.nn.relu(tf.reduce_sum(y, axis=1) - K)
