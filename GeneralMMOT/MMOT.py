@@ -4,24 +4,33 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 from GeneralMMOT.Distributions import gen_margs, gen_theta, up_sample
 
-BATCH_SIZE = 2 ** 10
-N = 15000
-N_FINE = 15000
-GAMMA = 1000
-DIM = 5
-T = 3
-MINMAX = -1  # Multiplier for objective function
-dist_type = 'MultiNormal'
+BATCH_SIZE = 2 ** 13
+N = 20000
+N_FINE = 20000
+GAMMA = 20000
+DIM = 30
+T = 2
+MINMAX = 1  # Multiplier for objective function
+dist_type = 'MultiNormal'  # "Unif0" and "Unif1" first and second example from gaoyue, "MultiNormal" normals
 ftype = 'basket0'
 
 # Objective Function TODO: ADJUST FOR DIFFERENT FTYPES!
-STRIKE = 0
-def f(s):
-    # s is input of shape [K, T, DIM], returns tensor of shape [BATCH_SIZE]
-    # return MINMAX * (s[:, 1, 0] - s[:, 1, 1]) ** 2
+# input of shape [K, T, DIM], returns shape [BATCH_SIZE]
+
+if ftype == 'basket0':
+    STRIKE = 0
+    def f(s):
+        return MINMAX * tf.nn.relu(tf.reduce_sum(s[:, T-1, :], axis=1) - STRIKE)
+elif ftype == 'basket':
+    STRIKE = 1
+    def f(s):
+        return MINMAX * tf.nn.relu(tf.reduce_sum(s[:, T-1, :], axis=1) - STRIKE)
+elif ftype == 'power':
+    exp = 2
+    def f(s):
+        return MINMAX * (s[:, 1, 0] - s[:, 1, 1]) ** exp
     # return MINMAX * tf.reduce_sum(tf.nn.relu(s[:, 1:2, 0] - s[:, 0:1, 0]), axis=1)
     # return tf.reduce_sum(s[:, T-1:T, :], axis=1)
-    return MINMAX * tf.nn.relu(tf.reduce_sum(s[:, T-1, :], axis=1) - STRIKE)
 
 
 # feed forward network structure
@@ -119,7 +128,7 @@ with tf.Session() as sess:
     for i in range(T-1):
         weights[1].append(weights_tot[T*DIM*UNIV_VARS + i*UNIV_VARS:T*DIM*UNIV_VARS + i*UNIV_VARS + 8])
 
-    gen_update = up_sample(BATCH_SIZE, T, DIM, weights, type=dist_type, ftype=ftype, MINMAX=MINMAX)
+    gen_update = up_sample(BATCH_SIZE, T, DIM, weights, type=dist_type, ftype=ftype, MINMAX=MINMAX, multiplier=0.5, quant=0.99)
     sample_plot = np.zeros([0, T, DIM])
     sample_plot_m = np.zeros([0, T, DIM])
     for i in range(10):
@@ -131,14 +140,6 @@ with tf.Session() as sess:
     sk = np.sum(sample_plot[:, T-1, :], axis=1) - STRIKE
     print(np.mean(np.maximum(sk, 0)))
 
-    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-    ax1.hist(sample_plot[:, 0, 0])
-    ax2.hist(sample_plot_m[:, 0, 0])
-    plt.show()
-
-    yn = input('Continue with updating? Empty enter to exit')
-    if not yn:
-        exit()
     for t in range(N+N_FINE+1, N+N_FINE+N+1):
         sample_marginals = next(gen_marginals)
         sample_ref = next(gen_ref)

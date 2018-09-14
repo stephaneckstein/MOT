@@ -120,15 +120,15 @@ def density_eval(batch_size, x, time_steps, dimension, weights, ftype='basket', 
     return density
 
 
-def up_sample(batch_size, time_steps, dimension, weights, batch_up=2 ** 15, type='Unif0', ftype='basket', MINMAX=1):
+def up_sample(batch_size, time_steps, dimension, weights, batch_up=2 ** 16, type='Unif0', ftype='basket', MINMAX=1, multiplier=1, quant=1):
     up_gen = gen_theta(batch_up, time_steps, dimension, type=type)
     sample_part = np.zeros([0, time_steps, dimension])
     while True:
         sample_up = next(up_gen)
         den_val = density_eval(batch_size, sample_up, time_steps, dimension, weights, ftype=ftype, batch_up=batch_up, MINMAX=MINMAX)
-        den_max = np.max(den_val)
+        den_max = np.quantile(den_val, q=quant)
         u = np.random.random_sample(batch_up)
-        sample_part = np.concatenate([sample_part, sample_up[u * den_max <= den_val, :, :]])
+        sample_part = np.concatenate([sample_part, sample_up[u * den_max * multiplier <= den_val, :, :]])
         while len(sample_part) >= batch_size:
             sample = sample_part[:batch_size, :, :]
             sample_part = sample_part[batch_size:, :, :]

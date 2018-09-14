@@ -7,8 +7,8 @@ BATCH_SIZE = 2 ** 9
 N = 10000
 N_FINE = 10000
 GAMMA = 1000
-DIM = 5
-T = 3
+DIM = 30
+T = 2
 MINMAX = -1  # Multiplier for objective function
 
 
@@ -30,7 +30,10 @@ print(2**17)
 print(np.sum(np.sum(s, axis=1) >= STRIKE))
 print(np.sum(np.sum(s_m[:, T-1, :], axis=1) >= STRIKE))
 sk = np.sum(s, axis=1) - STRIKE
+skm = np.sum(s_m[:, T-1, :], axis=1) - STRIKE
 print(np.mean(np.maximum(sk, 0)))
+print(np.mean(np.maximum(skm, 0)))
+exit()
 
 # feed forward network structure
 def univ_approx(x, name, hidden_dim=64, input_dim=1, output_dim=1):
