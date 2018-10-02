@@ -3,6 +3,19 @@ import time
 import matplotlib.pyplot as plt
 
 
+def gen_OT(batch_size, time_steps, dimension, type='MultiNormal'):
+    if type == 'MultiNormal':
+        np.random.seed(0)
+        sig = np.zeros([time_steps, dimension])
+        sig[time_steps-1, :] = np.random.random_sample(dimension) * 2
+        print('Sigma Matrix:')
+        print(sig)
+        sigT = sig[time_steps-1, :]
+        while True:
+            points = np.random.randn(batch_size, dimension) * sigT
+            yield points
+
+
 # GEN_POINTS
 def gen_margs(batch_size, time_steps, dimension, type='Unif0'):
     if type == 'MultiNormal':
@@ -13,6 +26,18 @@ def gen_margs(batch_size, time_steps, dimension, type='Unif0'):
         for i in range(time_steps-1):
             sig[time_steps-i-2, :] = ((1-downscale / (time_steps-1)) + (downscale / (time_steps-1)) * np.random.random_sample(dimension)) * sig[time_steps-i-1, :]
         np.random.seed(int(round(time.time())))
+        print('Sigma Matrix:')
+        print(sig)
+        while True:
+            points = np.random.randn(batch_size, time_steps, dimension) * sig
+            yield points
+
+    if type =='2dExtreme':
+        sig = np.zeros([time_steps, dimension])
+        sig[0, 0] = 0
+        sig[0, 1] = 1
+        sig[1, 0] = 2
+        sig[1, 1] = 1
         print('Sigma Matrix:')
         print(sig)
         while True:
@@ -44,6 +69,18 @@ def gen_theta(batch_size, time_steps, dimension, type='Unif0'):
         for i in range(time_steps-1):
             sig[time_steps-i-2, :] = ((1-downscale / (time_steps-1)) + (downscale / (time_steps-1)) * np.random.random_sample(dimension)) * sig[time_steps-i-1, :]
         np.random.seed(int(round(time.time())))
+        while True:
+            points = np.random.randn(batch_size, time_steps, dimension) * sig
+            yield points
+
+    if type =='2dExtreme':
+        sig = np.zeros([time_steps, dimension])
+        sig[0, 0] = 0
+        sig[0, 1] = 1
+        sig[1, 0] = 2
+        sig[1, 1] = 1
+        print('Sigma Matrix:')
+        print(sig)
         while True:
             points = np.random.randn(batch_size, time_steps, dimension) * sig
             yield points
@@ -81,6 +118,22 @@ def gen_comparison(batch_size, time_steps, dimension, type='MultiNormalComon'):
             for i in range(1, dimension):
                 points[:, i] = points[:, i-1] * sigT[i] / sigT[i-1]
             yield points
+    if type =='2dExtreme':
+        sig = np.zeros([time_steps, dimension])
+        sig[0, 0] = 0
+        sig[0, 1] = 1
+        sig[1, 0] = 2
+        sig[1, 1] = 1
+        print('Sigma Matrix:')
+        print(sig)
+        sigT = sig[time_steps-1, :]
+        while True:
+            points = np.random.randn(batch_size, dimension)
+            points[:, 0] = points[:, 0] * sigT[0]
+            for i in range(1, dimension):
+                points[:, i] = points[:, i-1] * sigT[i] / sigT[i-1]
+            yield points
+
 
 
 def univ_rebuild(x, w):

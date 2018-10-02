@@ -3,15 +3,16 @@ import numpy as np
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from GeneralMMOT.Distributions import gen_margs, gen_theta, up_sample
+import time
 
-BATCH_SIZE = 2 ** 13
-N = 20000
-N_FINE = 20000
-GAMMA = 20000
-DIM = 30
+BATCH_SIZE = 2 ** 10
+N = 30000
+N_FINE = 30000
+GAMMA = 1000
+DIM = 2
 T = 2
 MINMAX = 1  # Multiplier for objective function
-dist_type = 'MultiNormal'  # "Unif0" and "Unif1" first and second example from gaoyue, "MultiNormal" normals
+dist_type = '2dExtreme'  # "Unif0" and "Unif1" first and second example from gaoyue, "MultiNormal" normals
 ftype = 'basket0'
 
 # Objective Function TODO: ADJUST FOR DIFFERENT FTYPES!
@@ -34,7 +35,7 @@ elif ftype == 'power':
 
 
 # feed forward network structure
-def univ_approx(x, name, hidden_dim=32, input_dim=1, output_dim=1):
+def univ_approx(x, name, hidden_dim=64, input_dim=1, output_dim=1):
     # returns tensor of shape [BATCH_SIZE, output_dim]
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         ua_w = tf.get_variable('ua_w', shape=[input_dim, hidden_dim],
@@ -81,20 +82,21 @@ s2_theta = 0
 for i in range(T-1):
     # vi = tf.reshape(S[:, 0:i+1, :], [BATCH_SIZE, (i+1) * DIM])
     # the reshape results in [(t=1, d=1), (t=1, d=2), ..., (t=1, d=DIM), (t=2, d=1), ..., (t=(i+1), d=DIM)]
-    s2_theta += tf.reduce_sum(univ_approx(tf.reshape(S_theta[:, 0:i+1, :], [BATCH_SIZE, (i+1) * DIM]), 'm'+str(i), input_dim=(i+1)*DIM, output_dim=DIM, hidden_dim=32+DIM*10) * (tf.reduce_sum(S_theta[:, i+1:i+2, :], axis=1) - tf.reduce_sum(S_theta[:, i:i+1, :], axis=1)), axis=1)
+    s2_theta += tf.reduce_sum(univ_approx(tf.reshape(S_theta[:, 0:i+1, :], [BATCH_SIZE, (i+1) * DIM]), 'm'+str(i), input_dim=(i+1)*DIM, output_dim=DIM, hidden_dim=128) * (tf.reduce_sum(S_theta[:, i+1:i+2, :], axis=1) - tf.reduce_sum(S_theta[:, i:i+1, :], axis=1)), axis=1)
 
 fvar = f(S_theta)
 obj_fun = ints + GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(fvar - s1_theta - s2_theta)))
 train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.99, beta2=0.995).minimize(obj_fun)
 
 global_step = tf.Variable(0, trainable=False)
-train_op_fine = tf.train.AdamOptimizer(learning_rate=tf.train.exponential_decay(0.0001, global_step, 8, 0.995, staircase=False), beta1=0.99, beta2=0.995).minimize(obj_fun)
+train_op_fine = tf.train.AdamOptimizer(learning_rate=tf.train.exponential_decay(0.0001, global_step, int(N_FINE/2000), 0.995, staircase=False), beta1=0.99, beta2=0.995).minimize(obj_fun)
 
 density = tf.nn.relu(fvar - s1_theta - s2_theta)
 
 vlist = tf.trainable_variables()
 print([x.name for x in vlist])  # should be ordered 0_0, 0_1, ..., 0_DIM, 1_0, ..., 1_DIM, ..., (T-1)_DIM, m0, ..., m(T-2)
 
+start_time = time.time()
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
@@ -107,7 +109,8 @@ with tf.Session() as sess:
 
         (c, _) = sess.run([obj_fun, train_op], feed_dict={S_marg: sample_marginals, S_theta: sample_ref})
         vals.append(c)
-        if t%1000 == 0:
+        if t%10 == 0:
+            print(time.time()-start_time)
             print(t)
             print(np.mean(vals[t-1000:t]))
     for t in range(N+1, N+N_FINE+1):

@@ -1,15 +1,17 @@
 import tensorflow as tf
 import numpy as np
 from scipy.stats import norm
-from GeneralMMOT.Distributions import gen_margs, gen_theta, gen_comparison
+from GeneralMMOT.Distributions import gen_margs, gen_theta, gen_comparison, gen_OT
 
-BATCH_SIZE = 2 ** 9
-N = 10000
-N_FINE = 10000
-GAMMA = 1000
-DIM = 2
-T = 2
-MINMAX = -1  # Multiplier for objective function
+DIM = 20
+T = 2  # Here: Just so covariance is the same (random seed is used correctly)
+GAMMA = 500*DIM
+BATCH_MARGINAL =  2 ** 9
+BATCH_SIZE = (2 ** 8) * (2 ** (int(round(np.log2(DIM)))))
+N = 20000
+N_FINE = 20000
+FINE_S = 2500
+MINMAX = 1  # Multiplier for objective function
 
 
 # Objective Function
@@ -19,21 +21,23 @@ def f(s):
     # return MINMAX * (s[:, 1, 0] - s[:, 1, 1]) ** 2
     # return MINMAX * tf.reduce_sum(tf.nn.relu(s[:, 1:2, 0] - s[:, 0:1, 0]), axis=1)
     # return tf.reduce_sum(s[:, T-1:T, :], axis=1)
-    return MINMAX * tf.nn.relu(tf.reduce_sum(s[:, T-1, :], axis=1) - STRIKE)
+    return MINMAX * tf.nn.relu(tf.reduce_sum(s, axis=1) - STRIKE)
 
 
+NCD = 10
+skt = 0
+skmt = 0
 gen_c = gen_comparison(2 ** 17, T, DIM)
 gen_m = gen_margs(2 ** 17, T, DIM)
-s_m = next(gen_m)
-s = next(gen_c)
-print(2**17)
-print(np.sum(np.sum(s, axis=1) >= STRIKE))
-print(np.sum(np.sum(s_m[:, T-1, :], axis=1) >= STRIKE))
-sk = np.sum(s, axis=1) - STRIKE
-skm = np.sum(s_m[:, T-1, :], axis=1) - STRIKE
-print(np.mean(np.maximum(sk, 0)))
-print(np.mean(np.maximum(skm, 0)))
-exit()
+for ci in range(NCD):
+    s_m = next(gen_m)
+    s = next(gen_c)
+    sk = np.mean(np.maximum(np.sum(s, axis=1) - STRIKE, 0))
+    skm = np.mean(np.maximum(np.sum(s_m[:, T-1, :], axis=1) - STRIKE, 0))
+    skt += sk/NCD
+    skmt += skm/NCD
+print(skt)
+print(skmt)
 
 # feed forward network structure
 def univ_approx(x, name, hidden_dim=64, input_dim=1, output_dim=1):
@@ -65,43 +69,40 @@ def univ_approx(x, name, hidden_dim=64, input_dim=1, output_dim=1):
     return z
 
 
-S_marg = tf.placeholder(dtype=tf.float32, shape=[None, T, DIM])
-S_theta = tf.placeholder(dtype=tf.float32, shape=[None, T, DIM])
+S_marg = tf.placeholder(dtype=tf.float32, shape=[None, DIM])
+S_theta = tf.placeholder(dtype=tf.float32, shape=[None, DIM])
 s1 = 0
-for i in range(T):
-    for j in range(DIM):
-        s1 += tf.reduce_sum(univ_approx(tf.reduce_sum(S_marg[:, i:i+1, j:j+1], axis=1), str(i)+'_'+str(j)), axis=1)
+for j in range(DIM):
+    s1 += tf.reduce_sum(univ_approx(S_marg[:, j:j+1], str(j)), axis=1)
 
 ints = tf.reduce_mean(s1)
 
 s1_mu = 0
-for i in range(T):
-    for j in range(DIM):
-        s1_mu += tf.reduce_sum(univ_approx(tf.reduce_sum(S_theta[:, i:i+1, j:j+1], axis=1), str(i)+'_'+str(j)), axis=1)
+for j in range(DIM):
+    s1_mu += tf.reduce_sum(univ_approx(S_theta[:, j:j+1], str(j)), axis=1)
 
 s2_mu = 0
 
 fvar = f(S_theta)
 obj_fun = ints + GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(fvar - s1_mu - s2_mu)))
-train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.99, beta2=0.995).minimize(obj_fun)
 
 global_step = tf.Variable(0, trainable=False)
-train_op_fine = tf.train.AdamOptimizer(learning_rate=tf.train.exponential_decay(0.0001, global_step, 8, 0.995, staircase=False), beta1=0.99, beta2=0.995).minimize(obj_fun)
+train_op_fine = tf.train.AdamOptimizer(learning_rate=tf.train.exponential_decay(0.0001, global_step, N_FINE/FINE_S, 0.995, staircase=False), beta1=0.99, beta2=0.995).minimize(obj_fun)
 
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
     vals = []
-    gen_marginals = gen_margs(BATCH_SIZE, T, DIM, type='MultiNormal')
-    gen_ref = gen_theta(BATCH_SIZE, T, DIM, type='MultiNormal')
+    gen_marginals = gen_OT(BATCH_MARGINAL, T, DIM, type='MultiNormal')
+    gen_ref = gen_OT(BATCH_SIZE, T, DIM, type='MultiNormal')
     for t in range(1, N+1):
         sample_marginals = next(gen_marginals)
         sample_ref = next(gen_ref)
 
-        (c, _) = sess.run([obj_fun, train_op], feed_dict={S_marg: sample_marginals, S_theta: sample_ref})
+        (c, _) = sess.run([obj_fun, train_op_fine], feed_dict={S_marg: sample_marginals, S_theta: sample_ref, global_step: 1})
         vals.append(c)
-        if t%1000 == 0:
+        if t%100 == 0:
             print(t)
             print(np.mean(vals[t-2000:t]))
     for t in range(N+1, N+N_FINE+1):
@@ -109,6 +110,6 @@ with tf.Session() as sess:
         sample_ref = next(gen_ref)
         (c, _) = sess.run([obj_fun, train_op_fine], feed_dict={S_marg: sample_marginals, S_theta: sample_ref, global_step: t-N})
         vals.append(c)
-        if t%1000 == 0:
+        if t%100 == 0:
             print(t)
             print(np.mean(vals[t-2000:t]))
