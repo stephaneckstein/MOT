@@ -1,3 +1,7 @@
+import sys
+import subprocess
+repo_dir = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
+sys.path.append(repo_dir)
 import tensorflow as tf
 import numpy as np
 from scipy.stats import norm
