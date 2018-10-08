@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats import norm
 from GeneralMMOT.Distributions import gen_margs, gen_theta, gen_comparison, gen_OT
 
-DIM = 10
+DIM = 2
 T = 2  # Here: Just so covariance is the same (random seed is used correctly)
 GAMMA = 500*DIM
 BATCH_MARGINAL =  2 ** 9
@@ -16,6 +16,10 @@ N = 20000
 N_FINE = 20000
 FINE_S = 2500
 MINMAX = 1  # Multiplier for objective function
+
+BATCH_SIZE = 512
+print('GAMMA: ' + str(GAMMA))
+print('BATCH: ' + str(BATCH_SIZE))
 
 
 # Objective Function
@@ -28,20 +32,21 @@ def f(s):
     return MINMAX * tf.nn.relu(tf.reduce_sum(s, axis=1) - STRIKE)
 
 
-NCD = 10
-skt = 0
-skmt = 0
-gen_c = gen_comparison(2 ** 17, T, DIM)
-gen_m = gen_margs(2 ** 17, T, DIM)
-for ci in range(NCD):
-    s_m = next(gen_m)
-    s = next(gen_c)
-    sk = np.mean(np.maximum(np.sum(s, axis=1) - STRIKE, 0))
-    skm = np.mean(np.maximum(np.sum(s_m[:, T-1, :], axis=1) - STRIKE, 0))
-    skt += sk/NCD
-    skmt += skm/NCD
-print(skt)
-print(skmt)
+# NCD = 10
+# skt = 0
+# skmt = 0
+# gen_c = gen_comparison(2 ** 17, T, DIM)
+# gen_m = gen_margs(2 ** 17, T, DIM)
+# for ci in range(NCD):
+#     s_m = next(gen_m)
+#     s = next(gen_c)
+#     sk = np.mean(np.maximum(np.sum(s, axis=1) - STRIKE, 0))
+#     skm = np.mean(np.maximum(np.sum(s_m[:, T-1, :], axis=1) - STRIKE, 0))
+#     skt += sk/NCD
+#     skmt += skm/NCD
+# print(skt)
+# print(skmt)
+
 
 # feed forward network structure
 def univ_approx(x, name, hidden_dim=64, input_dim=1, output_dim=1):
@@ -75,6 +80,8 @@ def univ_approx(x, name, hidden_dim=64, input_dim=1, output_dim=1):
 
 S_marg = tf.placeholder(dtype=tf.float32, shape=[None, DIM])
 S_theta = tf.placeholder(dtype=tf.float32, shape=[None, DIM])
+two_side = tf.placeholder(dtype=tf.float32)
+
 s1 = 0
 for j in range(DIM):
     s1 += tf.reduce_sum(univ_approx(S_marg[:, j:j+1], str(j)), axis=1)
@@ -88,32 +95,58 @@ for j in range(DIM):
 s2_mu = 0
 
 fvar = f(S_theta)
-obj_fun = ints + GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(fvar - s1_mu - s2_mu)))
+obj_fun_pre = ints + GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(fvar - s1_mu - s2_mu)))
+obj_fun = obj_fun_pre + two_side * GAMMA * tf.reduce_mean(tf.square(tf.nn.relu(s1_mu+s2_mu-fvar)))
+
+
+# l1_regularizer = tf.contrib.layers.l1_regularizer(
+#    scale=0.0001, scope=None
+# )
+# weights = tf.trainable_variables() # all vars of your graph
+# regularization_penalty = tf.contrib.layers.apply_regularization(l1_regularizer, weights)
+# regularized_loss = obj_fun + regularization_penalty
+# train_step = tf.train.GradientDescentOptimizer(0.05).minimize(regularized_loss)
+
 
 global_step = tf.Variable(0, trainable=False)
 train_op_fine = tf.train.AdamOptimizer(learning_rate=tf.train.exponential_decay(0.0001, global_step, N_FINE/FINE_S, 0.995, staircase=False), beta1=0.99, beta2=0.995).minimize(obj_fun)
+# train_op_fine = tf.train.AdamOptimizer(learning_rate=tf.train.exponential_decay(0.0001, global_step, N_FINE/FINE_S, 0.995, staircase=False), beta1=0.99, beta2=0.995).minimize(regularized_loss)
 
+slist = []
+SAMPLE = 5
+TH = 1.01
 
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
+for s_ind in range(SAMPLE):
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
 
-    vals = []
-    gen_marginals = gen_OT(BATCH_MARGINAL, T, DIM, type='MultiNormal')
-    gen_ref = gen_OT(BATCH_SIZE, T, DIM, type='MultiNormal')
-    for t in range(1, N+1):
-        sample_marginals = next(gen_marginals)
-        sample_ref = next(gen_ref)
+        valspre = []
+        vals = []
+        gen_marginals = gen_OT(BATCH_MARGINAL, T, DIM, type='MultiNormal')
+        gen_ref = gen_OT(BATCH_SIZE, T, DIM, type='MultiNormal')
+        for t in range(1, N+1):
+            sample_marginals = next(gen_marginals)
+            sample_ref = next(gen_ref)
+            (c0, c, _) = sess.run([obj_fun_pre, obj_fun, train_op_fine], feed_dict={S_marg: sample_marginals, S_theta: sample_ref, global_step: 1, two_side: 1/t})
+            valspre.append(c0)
+            vals.append(c)
+            if t%100 == 0:
+                print(t)
+                print(np.mean(vals[t-100:t]))
+                print(np.mean(valspre[t-100:t]))
+                if np.mean(valspre[t-100:t]) < TH:
+                    slist.append(t)
+                    break
 
-        (c, _) = sess.run([obj_fun, train_op_fine], feed_dict={S_marg: sample_marginals, S_theta: sample_ref, global_step: 1})
-        vals.append(c)
-        if t%100 == 0:
-            print(t)
-            print(np.mean(vals[t-2000:t]))
-    for t in range(N+1, N+N_FINE+1):
-        sample_marginals = next(gen_marginals)
-        sample_ref = next(gen_ref)
-        (c, _) = sess.run([obj_fun, train_op_fine], feed_dict={S_marg: sample_marginals, S_theta: sample_ref, global_step: t-N})
-        vals.append(c)
-        if t%100 == 0:
-            print(t)
-            print(np.mean(vals[t-2000:t]))
+        # for t in range(N+1, N+N_FINE+1):
+        #     sample_marginals = next(gen_marginals)
+        #     sample_ref = next(gen_ref)
+        #     (c0, c, _) = sess.run([obj_fun_pre, obj_fun, train_op_fine], feed_dict={S_marg: sample_marginals, S_theta: sample_ref, global_step: t-N, two_side: 0})
+        #     valspre.append(c0)
+        #     vals.append(c)
+        #     if t%100 == 0:
+        #         print(t)
+        #         print(np.mean(vals[t-100:t]))
+        #         print(np.mean(valspre[t-100:t]))
+
+print(slist)

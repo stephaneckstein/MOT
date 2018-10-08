@@ -11,6 +11,7 @@ def gen_OT(batch_size, time_steps, dimension, type='MultiNormal'):
         print('Sigma Matrix:')
         print(sig)
         sigT = sig[time_steps-1, :]
+        np.random.seed(int(round(time.time())))
         while True:
             points = np.random.randn(batch_size, dimension) * sigT
             yield points
