@@ -9,9 +9,9 @@ from GeneralMMOT.Distributions import gen_margs, gen_theta, gen_comparison, gen_
 from sklearn.mixture import GaussianMixture
 
 
-DIM = 20
+DIM = 10
 T = 2  # Here: Just so covariance is the same (random seed is used correctly)
-GAMMA = 1000
+GAMMA = 100
 PENALTY_POWER = 2
 BATCH_MARGINAL = 2 ** 10
 BATCH_SIZE = 2 ** 10
